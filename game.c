@@ -103,6 +103,10 @@ void keyboard_update(ALLEGRO_EVENT* event)
     }
 }
 
+#define MOUSE_SEEN     1
+#define MOUSE_RELEASED 0
+
+ALLEGRO_MOUSE_STATE state;
 
 // Tamanho do Original
 #define WIDTH             101
@@ -327,6 +331,20 @@ void objetos_draw()
     }
 }
 
+void delete_row(int ini, int fim, int col)
+{
+    int i;
+    for (i=ini; i<=fim; i++)
+        elementos[i][col].tipo = 0;
+}
+
+void delete_col(int ini, int fim, int row)
+{
+    int i;
+    for (i=ini; i<=fim; i++)
+        elementos[row][i].tipo = 0;
+}
+
 int checa_cima(int tipo, int i, int j)
 {
     if (i < 0)
@@ -369,6 +387,7 @@ int checa_direita(int tipo, int i, int j)
 
 int checa_vertical(int tipo, int i, int j, int* cima, int* baixo)
 {
+    int total;
     *cima = checa_cima(tipo, i-1, j);
     *baixo = checa_baixo(tipo, i+1, j);
     total = *cima+*baixo+1;
@@ -381,6 +400,7 @@ int checa_vertical(int tipo, int i, int j, int* cima, int* baixo)
 
 int checa_horizontal(int tipo, int i, int j, int* esquerda, int* direita)
 {
+    int total;
     *esquerda = checa_esquerda(tipo, i, j-1);
     *direita = checa_direita(tipo, i, j+1);
     total = *esquerda+*direita+1;
@@ -391,22 +411,104 @@ int checa_horizontal(int tipo, int i, int j, int* esquerda, int* direita)
     return total;
 }
 
-void checa_bloco(int tipo, int i, int j)
+int checa_vertical_recursivo();
+int checa_horizontal_recursivo();
+
+int checa_vertical_recursivo(int tipo, int i, int j)
 {
-    int cima=0, baixo=0, esquerda=0, direita=0, vertical=0, horizontal=0, k;
+    int vertical, cima, baixo, k, points=0;
 
     vertical = checa_vertical(tipo, i, j, &cima, &baixo);
-    if (vertical >= 3)
+    if (vertical)
     {
+        points += vertical;
         for (k = i-cima; k < i+baixo; k++)
         {
-            horizontal = checa_horizontal(tipo, k, j, &esquerda, &direita);
-            if (horizontal >= 3)
+            elementos[k][j].tipo = 0;
+            points += checa_horizontal_recursivo(tipo, k, j);
+        }
+        return points-1;
+    }
+    return 0;
+}
+
+int checa_horizontal_recursivo(int tipo, int i, int j)
+{
+    int horizontal, esquerda, direita, k, points=0;
+
+    horizontal = checa_horizontal(tipo, i, j, &esquerda, &direita);
+    if (horizontal)
+    {
+        points += horizontal;
+        for (k = j-esquerda; k < j+direita; k++)
+        {
+            elementos[k][j].tipo = 0;
+            points += checa_vertical_recursivo(tipo, i, k);
+        }
+        return points-1;
+    }
+    return 0;
+}
+
+int checa_bloco(int i, int j)
+{
+    int tipo, points=0;
+    tipo = elementos[i][j].tipo;
+
+    points += checa_vertical_recursivo(tipo, i, j);
+    points += checa_horizontal_recursivo(tipo, i, j);
+
+    points += 1;
+
+    return points;
+}
+
+void troca(int i_ini, int i_fim, int j_ini, int j_fim)
+{
+    ELEMENTO aux;
+    aux = elementos[i_ini][j_ini];
+    elementos[i_ini][j_ini] = elementos[i_fim][j_fim];
+    elementos[i_fim][j_fim] = aux;
+}
+
+bool tem_movimentos()
+{
+    int i, j, tem, dump1, dump2;
+    
+    for (i=0; i<TAM; j++)
+    {
+        for (j=0; j<TAM; j++)
+        {
+            if (i < TAM-1)
             {
-                return 
+                troca(i, i+1, j, j);
+                tem = checa_vertical(elementos[i][j].tipo, i, j, &dump1, &dump2);
+                if (tem)
+                {
+                    troca(i, i+1, j, j);
+                    return 1;
+                }
+                tem = checa_vertical(elementos[i+1][j].tipo, i+1, j, &dump1, &dump2);
+                troca(i, i+1, j, j);
+                if (tem)
+                    return 1;
+            }
+            if (j < TAM-1)
+            {
+                troca(i, i, j, j+1);
+                tem = checa_horizontal(elementos[i][j].tipo, i, j, &dump1, &dump2);
+                if (tem)
+                {
+                    troca(i, i, j, j+1);
+                    return 1;
+                }
+                tem = checa_horizontal(elementos[i][j+1].tipo, i, j+1, &dump1, &dump2);
+                if (tem)
+                    return 1;
             }
         }
     }
+    return 0;
 }
 
 ALLEGRO_FONT* font;
@@ -442,6 +544,7 @@ int main ()
 {
     must_init(al_init(), "allegro");
     must_init(al_install_keyboard(), "keyboard");
+    must_init(al_install_mouse(), "mouse");
 
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 60.0);
     must_init(timer, "timer");
@@ -468,6 +571,7 @@ int main ()
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_display_event_source(disp));
     al_register_event_source(queue, al_get_timer_event_source(timer));
+    al_register_event_source(queue, al_get_mouse_event_source());
 
     keyboard_init();
     //fx_init();
@@ -481,6 +585,9 @@ int main ()
     bool redraw = true;
     ALLEGRO_EVENT event;
     bool menu = false;
+    bool mouse = false;
+    int x_clicado;
+    int y_clicado;
 
     al_start_timer(timer);
 
@@ -509,8 +616,20 @@ int main ()
                     else
                         menu = true;
                 }
-                if (event.keyboard.keycode == ALLEGRO_KEY_W)
-                    elementos[0][7].tipo = 0;
+            
+            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+                if (event.mouse.button == 1 && !mouse)
+                {
+                    mouse=true;
+                    x_clicado = event.mouse.x;
+                    y_clicado = event.mouse.y;
+                }
+                else if (event.mouse.button == 1)
+                    mouse=false;
+            
+            //case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+                //if (event.mouse.button == 1)
+                //mouse=false;
         }
 
         if(done)
@@ -528,6 +647,12 @@ int main ()
 
             if (menu)
                 draw_menu();
+
+            if (mouse)
+            {
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "%04d",x_clicado);
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 50, 0, "%04d",y_clicado);
+            }
             /*
             stars_draw();
             aliens_draw();
