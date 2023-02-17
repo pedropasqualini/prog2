@@ -9,8 +9,14 @@
 #define DISP_H (BUFFER_H * DISP_SCALE)
 
 // ENUM de tipo
-#define AMARELO
-#define VERDE
+#define AMARELO             1
+#define AZUL                2
+#define VERDE               3
+#define VERMELHO            4
+#define ROXO                5
+#define ROSA                6
+#define BRANCO              7
+#define ESPECIAL            8
 
 // Posição do Original
 #define SX_AMARELO

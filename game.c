@@ -28,10 +28,10 @@ float between_f(float lo, float hi)
     return lo + ((float)rand() / (float)RAND_MAX) * (hi - lo);
 }
 
-#define BUFFER_W 320
-#define BUFFER_H 240
+#define BUFFER_W 808
+#define BUFFER_H 808
 
-#define DISP_SCALE 3
+#define DISP_SCALE 1
 #define DISP_W (BUFFER_W * DISP_SCALE)
 #define DISP_H (BUFFER_H * DISP_SCALE)
 
@@ -102,18 +102,8 @@ void keyboard_update(ALLEGRO_EVENT* event)
 #define HEIGHT            101
 
 // ENUM de estado
-#define NORMAL              1
-#define BOMBA               2
-
-typedef struct t_elementos
-{
-    int tipo;
-    int estado;
-    int x;
-    int y;
-    int sx;
-    int sy;
-} t_elementos;
+#define NORMAL              0
+#define BOMBA               1
 
 typedef struct SPRITES
 {
@@ -198,6 +188,110 @@ void sprites_deinit()
     // no exemplo n recebe parametro pq usa variavel global
 }
 
+#define TAM 8
+
+typedef struct ELEMENTO
+{
+    int tipo;
+    int estado;
+    int x;
+    int y;
+} ELEMENTO;
+ELEMENTO elementos[TAM][TAM];
+
+void objetos_init()
+{
+    int i, j;
+    for (i = 0; i < TAM; i++)
+    {
+        for (j = 0; j < TAM; j++)
+        {
+            elementos[i][j].tipo = between(1, 5);
+            elementos[i][j].estado = NORMAL;
+            elementos[i][j].x = i*WIDTH;
+            elementos[i][j].y = j*HEIGHT;
+        }
+    }
+}
+
+// ENUM de tipo
+#define AMARELO             1
+#define AZUL                2
+#define VERDE               3
+#define VERMELHO            4
+#define ROXO                5
+#define ROSA                6
+#define BRANCO              7
+#define ESPECIAL            8
+
+void objetos_draw()
+{
+    int i, j;
+    for (i = 0; i < TAM; i++)
+    {
+        for (j = 0; j < TAM; j++)
+        {
+            switch (elementos[i][j].tipo)
+            {
+                case 0:
+                    continue;
+
+                case AMARELO:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.amarelo[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.amarelo[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case AZUL:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.azul[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.azul[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case VERDE:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.verde[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.verde[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case VERMELHO:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.vermelho[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.vermelho[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case ROXO:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.roxo[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.roxo[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case ROSA:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.rosa[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.rosa[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case BRANCO:
+                    if (elementos[i][j].estado == NORMAL)
+                        al_draw_bitmap(sprites.branco[0], elementos[i][j].x, elementos[i][j].y, 0);
+                    else
+                        al_draw_bitmap(sprites.branco[1], elementos[i][j].x, elementos[i][j].y, 0);
+                    break;
+
+                case ESPECIAL:
+                    al_draw_bitmap(sprites.especial, elementos[i][j].x, elementos[i][j].y, 0);
+            }
+        }
+    }
+}
+
 int main ()
 {
     must_init(al_init(), "allegro");
@@ -230,7 +324,7 @@ int main ()
 
     keyboard_init();
     //fx_init();
-    //board_init();
+    objetos_init();
 
     frames = 0;
     score = 0;
@@ -270,6 +364,7 @@ int main ()
             disp_pre_draw();
             al_clear_to_color(al_map_rgb(0,0,0));
 
+            objetos_draw();
             /*
             stars_draw();
             aliens_draw();
