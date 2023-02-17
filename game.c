@@ -247,8 +247,8 @@ void objetos_init()
                 elementos[i][j].tipo = between(1, 5);
             } while (!checa_init(i, j));
             elementos[i][j].estado = NORMAL;
-            elementos[i][j].x = j*WIDTH;
-            elementos[i][j].y = i*HEIGHT;
+            elementos[i][j].x = i*WIDTH;
+            elementos[i][j].y = j*HEIGHT;
         }
     }
 }
@@ -465,6 +465,16 @@ int checa_bloco(int i, int j)
 
 void troca(int i_ini, int i_fim, int j_ini, int j_fim)
 {
+    int pos_aux;
+    
+    pos_aux = elementos[i_ini][j_ini].x;
+    elementos[i_ini][j_ini].x = elementos[i_fim][j_fim].x;
+    elementos[i_fim][j_fim].x = pos_aux;
+
+    pos_aux = elementos[i_ini][j_ini].y;
+    elementos[i_ini][j_ini].y = elementos[i_fim][j_fim].y;
+    elementos[i_fim][j_fim].y = pos_aux;
+
     ELEMENTO aux;
     aux = elementos[i_ini][j_ini];
     elementos[i_ini][j_ini] = elementos[i_fim][j_fim];
@@ -540,6 +550,21 @@ void draw_menu()
         "Jogo feito por Pedro Pasqualini");
 }
 
+void calcula_selec(int* i, int* j)
+{
+    int resto_i, resto_j;
+    resto_i = (*i) % 101;
+    resto_j = (*j) % 101;
+    if (resto_i > 13 && resto_i < 89) 
+        *i = (*i) / 101;
+    else
+        *i = -1;
+    if (resto_j > 13 && resto_j < 89)
+        *j = (*j) / 101;
+    else
+        *j = -1;
+}
+
 int main ()
 {
     must_init(al_init(), "allegro");
@@ -588,6 +613,8 @@ int main ()
     bool mouse = false;
     int x_clicado;
     int y_clicado;
+    int x_segundo;
+    int y_segundo;
 
     al_start_timer(timer);
 
@@ -620,13 +647,23 @@ int main ()
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                 if (event.mouse.button == 1 && !mouse)
                 {
-                    mouse=true;
                     x_clicado = event.mouse.x;
                     y_clicado = event.mouse.y;
+                    calcula_selec(&x_clicado, &y_clicado);
+                    if (x_clicado != -1 && y_clicado != -1)
+                        mouse=true;
                 }
                 else if (event.mouse.button == 1)
-                    mouse=false;
-            
+                {
+                    x_segundo = event.mouse.x;
+                    y_segundo = event.mouse.y;
+                    calcula_selec(&x_segundo, &y_segundo);
+                    if (x_segundo != -1 && y_segundo != -1)
+                    {
+                        troca(x_clicado, x_segundo, y_clicado, y_segundo);
+                        mouse=false;
+                    }
+                }
             //case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 //if (event.mouse.button == 1)
                 //mouse=false;
@@ -648,11 +685,12 @@ int main ()
             if (menu)
                 draw_menu();
 
-            if (mouse)
-            {
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "%04d",x_clicado);
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 50, 0, "%04d",y_clicado);
-            }
+
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "%02d",x_clicado);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 50, 0, "%02d",y_clicado);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 100, 0, "%02d",x_segundo);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 150, 0, "%02d",y_segundo);
+            
             /*
             stars_draw();
             aliens_draw();
