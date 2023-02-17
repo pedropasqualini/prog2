@@ -4,7 +4,8 @@ OBJS = hello.o
 EXE  = hello
 
 CFLAGS = -Wall
-LFLAGS = `pkg-config allegro-5 allegro_font-5 allegro_image-5 --libs --cflags`
+LFLAGS = `pkg-config allegro-5 allegro_font-5 allegro_image-5 allegro_primitives-5 --libs --cflags`
+
 
 all: $(EXE)
 

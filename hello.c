@@ -1,62 +1,47 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_primitives.h>
+
+void must_init(bool test, const char *description)
+{
+    if(test) return;
+
+    printf("couldn't initialize %s\n", description);
+    exit(1);
+}
+
+
 
 int main()
 {
-    if(!al_init())
-    {
-        printf("couldn't initialize allegro\n");
-        return 1;
-    }
-
-    if(!al_install_keyboard())
-    {
-        printf("couldn't initialize keyboard\n");
-        return 1;
-    }
+    must_init(al_init(), "allegro");
+    must_init(al_install_keyboard(), "keyboard");
 
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
-    if(!timer)
-    {
-        printf("couldn't initialize timer\n");
-        return 1;
-    }
+    must_init(timer, "timer");
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
-    if(!queue)
-    {
-        printf("couldn't initialize queue\n");
-        return 1;
-    }
+    must_init(queue, "queue");
+
+    al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+    al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+    al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 
     ALLEGRO_DISPLAY* disp = al_create_display(640, 480);
-    if(!disp)
-    {
-        printf("couldn't initialize display\n");
-        return 1;
-    }
+    must_init(disp, "display");
 
     ALLEGRO_FONT* font = al_create_builtin_font();
-    if(!font)
-    {
-        printf("couldn't initialize font\n");
-        return 1;
-    }
+    must_init(font, "font");
 
-    if(!al_init_image_addon())
-    {
-        printf("couldn't initialize image addon\n");
-        return 1;
-    }
+    must_init(al_init_image_addon(), "image addon");
+    ALLEGRO_BITMAP* jewels = al_load_bitmap("all_jewels.png");
+    must_init(jewels, "jewels");
 
-    ALLEGRO_BITMAP* mysha = al_load_bitmap("mysha.png");
-    if(!mysha)
-    {
-        printf("couldn't load mysha\n");
-        return 1;
-    }
+
+    must_init(al_init_primitives_addon(), "primitives");
 
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_display_event_source(disp));
@@ -89,10 +74,15 @@ int main()
 
         if(redraw && al_is_event_queue_empty(queue))
         {
-            al_clear_to_color(al_map_rgb(0, 0, 0));
-            al_draw_text(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Hello world!");
-            
-            al_draw_tinted_bitmap(mysha, al_map_rgb(0, 255, 0), 100, 100, 0);
+
+            al_draw_scaled_bitmap(jewels, 100, 100, 100, 100, 10, 10, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 200, 200, 100, 100, 60, 60, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 300, 300, 100, 100, 110, 110, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 400, 400, 100, 100, 160, 160, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 500, 500, 100, 100, 210, 210, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 600, 600, 100, 100, 260, 260, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 700, 700, 100, 100, 310, 310, 50, 50, 0);
+            al_draw_scaled_bitmap(jewels, 800, 800, 100, 100, 360, 360, 50, 50, 0);
 
             al_flip_display();
 
@@ -100,7 +90,7 @@ int main()
         }
     }
 
-    al_destroy_bitmap(mysha);
+    al_destroy_bitmap(jewels);
     al_destroy_font(font);
     al_destroy_display(disp);
     al_destroy_timer(timer);
